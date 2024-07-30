@@ -50,6 +50,9 @@ int main()
 {
     const unsigned width = 512;
     const unsigned height = 512;
+    auto repulsion = 0.1;
+    auto friction = 0.1;
+    auto gravity = 0.01;
 
     // create the window
     sf::RenderWindow window(sf::VideoMode(width, height), "Some Funky Title");
@@ -151,23 +154,23 @@ int main()
             TensorField[particle->y + 1][particle->x + 1].as<float4>()->mx = 0;
 
             particle->my += TensorField[particle->y - 1][particle->x - 1].as<float4>()->my;
-            TensorField[particle->y - 1][particle->x - 1].as<float4>()->my = 0.001;
+            TensorField[particle->y - 1][particle->x - 1].as<float4>()->my = gravity;
             particle->my += TensorField[particle->y - 1][particle->x].as<float4>()->my;
-            TensorField[particle->y - 1][particle->x].as<float4>()->my = 0.001;
+            TensorField[particle->y - 1][particle->x].as<float4>()->my = gravity;
             particle->my += TensorField[particle->y - 1][particle->x + 1].as<float4>()->my;
-            TensorField[particle->y - 1][particle->x + 1].as<float4>()->my = 0.001;
+            TensorField[particle->y - 1][particle->x + 1].as<float4>()->my = gravity;
 
             particle->my += TensorField[particle->y + 1][particle->x - 1].as<float4>()->my;
-            TensorField[particle->y + 1][particle->x - 1].as<float4>()->my = 0.001;
+            TensorField[particle->y + 1][particle->x - 1].as<float4>()->my = gravity;
             particle->my += TensorField[particle->y + 1][particle->x].as<float4>()->my;
-            TensorField[particle->y + 1][particle->x].as<float4>()->my = 0.001;
+            TensorField[particle->y + 1][particle->x].as<float4>()->my = gravity;
             particle->my += TensorField[particle->y + 1][particle->x + 1].as<float4>()->my;
-            TensorField[particle->y + 1][particle->x + 1].as<float4>()->my = 0.001;
+            TensorField[particle->y + 1][particle->x + 1].as<float4>()->my = gravity;
 
             particle->mx += TensorField[particle->y][particle->x].as<float4>()->mx;
             TensorField[particle->y][particle->x].as<float4>()->mx = 0;
             particle->my += TensorField[particle->y][particle->x].as<float4>()->my;
-            TensorField[particle->y][particle->x].as<float4>()->my = 0.001;
+            TensorField[particle->y][particle->x].as<float4>()->my = gravity;
 
             // particle->mx *= 0.99;
             // particle->my *= 0.99;
@@ -197,24 +200,26 @@ int main()
 
             //     particle->x = std::max(0.0f, std::min(float(width-1), particle->x));
             //     particle->y = std::max(0.0f, std::min(float(height-1), particle->y));
-            auto ax = particle->mx / 6 * 1.0000;
-            auto ay = particle->my / 6 * 1.0000;
+            
+
+            auto ax = (particle->mx / 6) * (1.0-friction);
+            auto ay = (particle->my) / 6 * (1.0-friction);
             // }
-            TensorField[particle->y - 1][particle->x - 1].as<float4>()->mx += 0.1 * -1 + ax;
-            TensorField[particle->y][particle->x - 1].as<float4>()->mx += 0.1 * -1 + ax;
-            TensorField[particle->y + 1][particle->x - 1].as<float4>()->mx += 0.1 * -1 + ax;
+            TensorField[particle->y - 1][particle->x - 1].as<float4>()->mx += repulsion * -1 + ax;
+            TensorField[particle->y][particle->x - 1].as<float4>()->mx += repulsion * -1 + ax;
+            TensorField[particle->y + 1][particle->x - 1].as<float4>()->mx += repulsion * -1 + ax;
 
-            TensorField[particle->y - 1][particle->x + 1].as<float4>()->mx += 0.1 * 1 + ax;
-            TensorField[particle->y][particle->x + 1].as<float4>()->mx += 0.1 * 1 + ax;
-            TensorField[particle->y + 1][particle->x + 1].as<float4>()->mx += 0.1 * 1 + ax;
+            TensorField[particle->y - 1][particle->x + 1].as<float4>()->mx += repulsion * 1 + ax;
+            TensorField[particle->y][particle->x + 1].as<float4>()->mx += repulsion * 1 + ax;
+            TensorField[particle->y + 1][particle->x + 1].as<float4>()->mx += repulsion * 1 + ax;
 
-            TensorField[particle->y - 1][particle->x - 1].as<float4>()->my += 0.1 * -1 + ay;
-            TensorField[particle->y - 1][particle->x].as<float4>()->my += 0.1 * -1 + ay;
-            TensorField[particle->y - 1][particle->x + 1].as<float4>()->my += 0.1 * -1 + ay;
+            TensorField[particle->y - 1][particle->x - 1].as<float4>()->my += repulsion * -1 + ay;
+            TensorField[particle->y - 1][particle->x].as<float4>()->my += repulsion * -1 + ay;
+            TensorField[particle->y - 1][particle->x + 1].as<float4>()->my += repulsion * -1 + ay;
 
-            TensorField[particle->y + 1][particle->x - 1].as<float4>()->my += 0.1 * 1 + ay;
-            TensorField[particle->y + 1][particle->x].as<float4>()->my += 0.1 * 1 + ay;
-            TensorField[particle->y + 1][particle->x + 1].as<float4>()->my += 0.1 * 1 + ay;
+            TensorField[particle->y + 1][particle->x - 1].as<float4>()->my += repulsion * 1 + ay;
+            TensorField[particle->y + 1][particle->x].as<float4>()->my += repulsion * 1 + ay;
+            TensorField[particle->y + 1][particle->x + 1].as<float4>()->my += repulsion * 1 + ay;
 
             // TensorField[particle->y][particle->x].as<float4>()->mx += ax;
             // TensorField[particle->y][particle->x].as<float4>()->my += ay;
