@@ -181,15 +181,17 @@ public:
         if(
             shape.total_size() == ((Tensor*)(&other))->shape.total_size() && strides.total_size() == ((Tensor*)(&other))->strides.total_size()
         ){
+
             memcpy(data, other.data, total_bytes);
             return 0;
         }
 
         if(
-            other.shape.ndim == 0 || other.shape.shape[0] == 1
+            other.shape.ndim == 0 || (other.shape.shape[0] == 1 && other.shape.ndim == 1)
         ){
             auto bytes = dtype_size(dtype);
             std::cout << "Bytes: " << bytes * total_size << std::endl;
+            std::cout << "Total bits: " << total_size << std::endl;
             switch (bytes)
             {   
                 case 1:
@@ -222,9 +224,11 @@ public:
     
         auto bcast = ((Tensor*)(&other))->broadcast(shape);
 
-        for (size_t i = 0; i < shape[0]; i++)
+        for (int i = 0; i < shape.shape[0]; i++)
         {
-            this->operator[](i) = bcast[i];
+            auto bbx = bcast[i];
+            auto aax = this->operator[](i);
+            aax = bbx;
         }
         
         return 0;
@@ -267,7 +271,7 @@ public:
             throw std::runtime_error("Index out of range");
         }
 
-        i = i % shape[0];
+        i = size_t(i) % shape[0];
         
         Tensor a;
         a.shape = Shape();
@@ -339,15 +343,17 @@ public:
     Tensor broadcast(const Shape& a)
     {
         Tensor b{a, data, dtype, device_type};
-        for (size_t i = 0; i < a.ndim; i++)
+        for (size_t i = 1; i < a.ndim+1; i++)
         {
-            if(i-a.ndim+shape.ndim >= 0 && a.shape[i] != shape[i-a.ndim+shape.ndim] && shape[i-a.ndim] != 1){
+            if(shape.ndim > i && a.shape[-i%a.ndim] != shape.shape[-i%shape.ndim] && shape.shape[-i%shape.ndim] != 1){
                 std::cerr << "Incompatible shapes for broadcast" << std::endl;
+                std::cerr << i << "\n";
                 std::cerr << "Shape: " << shape << " Broadcast shape: " << a << std::endl;
+                std::cerr << "Shape: " << shape.shape[-i%shape.ndim] << " Broadcast shape: " << a.shape[-i%a.ndim] << std::endl;
                 throw std::runtime_error("Incompatible shapes for broadcast");
             }
 
-            if (i-a.ndim < 0 || shape[i-a.ndim+shape.ndim] == 1)
+            if (shape.ndim < i || shape[-i] == 1)
             {
                 b.strides[i] = 0;
             }
