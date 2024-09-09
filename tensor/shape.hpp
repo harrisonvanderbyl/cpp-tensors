@@ -51,12 +51,12 @@ struct Shape
 
     int& operator[](int i)
     {
-        if (i >= ndim && i < -int(ndim))
-        {
-            std::cerr << "Index out of range" << std::endl;
-            std::cerr << "Index: " << i << " Ndim: " << ndim << std::endl;
-            throw std::runtime_error("Index out of range");
-        }
+        // if (i >= ndim && i < -int(ndim))
+        // {
+        //     std::cerr << "Index out of range" << std::endl;
+        //     std::cerr << "Index: " << i << " Ndim: " << ndim << std::endl;
+        //     throw std::runtime_error("Index out of range");
+        // }
         
         return shape[i%ndim];
     }

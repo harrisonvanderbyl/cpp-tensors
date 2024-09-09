@@ -264,12 +264,12 @@ public:
 
     inline Tensor operator[](int i)
     {
-         if (i < -shape[0]  || i >= shape[0] )
-        {
-            std::cerr << "Index out of range" << std::endl;
-            std::cerr << "Index: " << i << " Shape: " << shape << std::endl;
-            throw std::runtime_error("Index out of range");
-        }
+        //  if (i < -shape[0]  || i >= shape[0] )
+        // {
+        //     std::cerr << "Index out of range" << std::endl;
+        //     std::cerr << "Index: " << i << " Shape: " << shape << std::endl;
+        //     throw std::runtime_error("Index out of range");
+        // }
 
         i = size_t(i) % shape[0];
         
@@ -291,6 +291,20 @@ public:
         }
         return a;
     }
+
+    template <typename T>
+    inline T* get(int i, int j)
+    {
+        // if (i < 0 || i >= shape[0] || j < 0 || j >= shape[1])
+        // {
+        //     std::cerr << "Index out of range" << std::endl;
+        //     std::cerr << "Index: " << i << " Shape: " << shape << std::endl;
+        //     throw std::runtime_error("Index out of range");
+        // }
+
+        return (T *)((uint8_t *)data + (i * strides[0] + j * strides[1]) * dtype_size(dtype));
+    }
+
 
     template <typename T>
     inline T& flattened_get(int i) const
