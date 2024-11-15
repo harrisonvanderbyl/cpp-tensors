@@ -305,6 +305,20 @@ public:
         return (T *)((uint8_t *)data + (i * strides[0] + j * strides[1]) * dtype_size(dtype));
     }
 
+    template <typename T>
+    inline T* get(int i, int j, int k)
+    {
+        // if (i < 0 || i >= shape[0] || j < 0 || j >= shape[1])
+        // {
+        //     std::cerr << "Index out of range" << std::endl;
+        //     std::cerr << "Index: " << i << " Shape: " << shape << std::endl;
+        //     throw std::runtime_error("Index out of range");
+        // }
+
+        return (T *)((uint8_t *)data + (i * strides[0] + j * strides[1] + k * strides[2]) * dtype_size(dtype));
+    }
+   
+
 
     template <typename T>
     inline T& flattened_get(int i) const

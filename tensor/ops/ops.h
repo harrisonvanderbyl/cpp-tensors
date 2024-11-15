@@ -72,12 +72,12 @@ void div(T& a, T& b, T& out, size_t& i)
     i++;
 }
 
-template <typename T>
-void pow(T& a, T& b, T& out, size_t& i)
-{
-    out = pow(a, b);
-    i++;
-}
+// template <typename T>
+// void pow(T& a, T& b, T& out, size_t& i)
+// {
+//     out = pow(a, b);
+//     i++;
+// }
 
 
 #define MakeOp(OP) \
@@ -134,9 +134,10 @@ Tensor operator/(Tensor a, Tensor b)
     MakeOp(div)
 }
 
-Tensor operator^(Tensor a, Tensor b)
-{
-    MakeOp(pow)
-}
+// Tensor operator^(Tensor a, Tensor b)
+// {
+//     MakeOp(pow)
+// }
+
 
 #endif

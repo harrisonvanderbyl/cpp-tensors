@@ -1,6 +1,32 @@
 
 #define pows(x) (pow(float(x), 2))
 #include "immintrin.h"
+
+struct float2 {
+    float x;
+    float y;
+
+    float2(int x, int y)
+    {
+        this->x = x;
+        this->y = y;
+    };
+
+    float2(float x, float y)
+    {
+        this->x = x;
+        this->y = y;
+    };
+
+    float2()
+    {
+        this->x = 0;
+        this->y = 0;
+    };
+
+    
+};
+
 struct float4
 {
     float x;
@@ -15,12 +41,34 @@ struct float4
         this->z = z;
         this->w = w;
     };
+    float4(float x, float y, float z, float w)
+    {
+        this->x = x;
+        this->y = y;
+        this->z = z;
+        this->w = w;
+    };
     float4()
     {
         this->x = 0;
         this->y = 0;
         this->z = 0;
         this->w = 0;
+    };
+
+    float2& xy()
+    {
+        return *(float2 *)this;
+    };
+
+    float2& yz()
+    {
+        return *(float2 *)&y;
+    };
+
+    float2& zw()
+    {
+        return *(float2 *)&z;
     };
 
     float4 operator+(float4 &other)
@@ -183,5 +231,22 @@ struct float4
         out[2] = z;
         out[3] = w;
         return out;
+    };
+
+    float& operator [](int index)
+    {
+        switch (index)
+        {
+        case 0:
+            return x;
+        case 1:
+            return y;
+        case 2:
+            return z;
+        case 3:
+            return w;
+        default:
+            throw "Index out of range";
+        }
     };
 };
