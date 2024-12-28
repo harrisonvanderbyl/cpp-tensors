@@ -16,9 +16,9 @@
 #include <cuda_gl_interop.h>   
 
 
-auto width = 256 ;
-auto height = 256;
-auto depth = 256;
+const int width = 256 ;
+const int height = 256;
+const int depth = 256;
 
 std::string vertexShader = R"(
 #version 330 core
@@ -66,7 +66,7 @@ void main()
     vec4 tensor2 = data[int(position.z-0.1) + int(position.x-0.1) * size.x + int(position.y-0.1) * size.x * size.y];
     if (tensor.w > 0.5 || tensor2.w > 0.5)
     {
-        FragColor = vec4(tensor.xyz*0.5+0.5, 1.0);
+        FragColor = vec4(0.0,0.5,1.0, 0.5);
     }
     else
     {
@@ -158,7 +158,7 @@ auto initGL()
 
 
 
-auto repulsion = 0.02;
+// auto repulsion = -0.0002;
 float gravity = -0.01;
 auto warp = 0.0;
 auto scale = 1;
@@ -197,7 +197,7 @@ void draw_circle(Tensor &screenbuffer, int x, int y, int radius, int r, int g, i
 
 __global__ void ProcessParticlesKernel(float4 *particles, float4 *tensorField, int numParticles,
                                        int width, int height, int depth, float4 gravity,
-                                       float repulsion, int numblocks, float friction)
+                                       float repulsiona, int numblocks, float friction)
 {
 
     for (int ioo = 0; ioo < numblocks; ioo++)
@@ -238,6 +238,7 @@ __global__ void ProcessParticlesKernel(float4 *particles, float4 *tensorField, i
         particle.x += momentum.x;
         particle.y += momentum.y;
         particle.z += momentum.z;
+        float repulsion = particle.w;
 
               
         
@@ -387,7 +388,7 @@ struct thread
         float4 gravity4 = {0.f, gravity, 0.f, 0.f};
         if (activepartivles > 1000000)
             gravity4 = {gravity, 0.f, 0.f, 0.f};
-        LaunchProcessParticlesKernel((float4 *)this->gpuparticles, this->TensorField, numParticles, width, height, depth, gravity4, repulsion, friction);
+        LaunchProcessParticlesKernel((float4 *)this->gpuparticles, this->TensorField, numParticles, width, height, depth, gravity4, 0.0f, friction);
     }
 
     void update()
@@ -579,21 +580,20 @@ struct Camera
         out.x = out.x * 2;
         out.y = out.y * 2;
 
-        out.x *= 1024;
-        out.y *= 1024;
+        out.x *= 512;
+        out.y *= 512;
         return out;
     }
 };
+const int numverts = 24 * (height + width + depth);
+const unsigned int numquads = numverts / 6;
 
-
-auto drawbox(float x, float y, float z, const int w, const int h, const int d, unsigned int shaderProgram, Camera &camera, thread& t)
-{
-
-    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
-    int height = int(h);
-    int width = int(w);
-    int depth = int(d);
-    float vertices[24 * (h + w + d)];
+class supercube{
+    public:
+    float* vertices = new float[numverts];
+    unsigned int* indices = new unsigned int[numquads];
+    supercube(float x, float y, float z, const int w, const int h, const int d){
+     
     for (int i = 0; i < h; i++)
      {
         // positions          // colors
@@ -706,13 +706,32 @@ auto drawbox(float x, float y, float z, const int w, const int h, const int d, u
         vertices[i * 24 + 23] = 0.0f;
     };
 
-    unsigned int numquads = sizeof(vertices) / sizeof(float) / 6;
+    // unsigned int numquads = sizeof(vertices) / sizeof(float) / 6;
 
-    unsigned int indices[numquads];
+    // indices = new unsigned int[numquads];
     for (int i = 0; i < numquads; i++)
     {
         indices[i] = i;
     }
+    }
+};
+
+
+auto drawbox(float x, float y, float z, const int w, const int h, const int d, unsigned int shaderProgram, Camera &camera, thread& t, const supercube& cube)
+{
+
+    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+    // auto vertices = cube.vertices;
+    // auto indices = cube.indices;
+
+    
+
+    
+
+    int height = int(h);
+    int width = int(w);
+    int depth = int(d);
+    
 
     unsigned int VBO, VAO, EBO;
     glGenVertexArrays(1, &VAO);
@@ -723,10 +742,10 @@ auto drawbox(float x, float y, float z, const int w, const int h, const int d, u
     glBindVertexArray(VAO);
 
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER,numverts*4, cube.vertices, GL_STATIC_DRAW);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, numquads*4, cube.indices, GL_STATIC_DRAW);
 
     // position attribute
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *)0);
@@ -774,7 +793,7 @@ auto drawbox(float x, float y, float z, const int w, const int h, const int d, u
     glBindVertexArray(VAO);
     // make sure depth testing is enabled
     
-    glDrawElements(GL_QUADS, sizeof(indices) / sizeof(unsigned int), GL_UNSIGNED_INT, 0);
+    glDrawElements(GL_QUADS, numquads, GL_UNSIGNED_INT, 0);
     glEnd();
 
     // remap the buffer
@@ -789,9 +808,9 @@ int main()
     // auto friction = ((1.0-0.0)/ pow(size*2 + 1,2));
 
     // create the window
-    sf::RenderWindow window(sf::VideoMode(1024, 1024), "Some Funky Title", sf::Style::Default, sf::ContextSettings(32));
+    sf::RenderWindow window(sf::VideoMode(512, 512), "Some Funky Title", sf::Style::Default, sf::ContextSettings(32));
     sf::Texture texture;
-    texture.create(1024, 1024);
+    texture.create(512, 512);
 
     initGL();
     auto shaderProgram = loadShader(vertexShader, fragmentShader);
@@ -811,6 +830,8 @@ int main()
     window.setMouseCursorVisible(false);
     window.setMouseCursorGrabbed(true);
 
+    const supercube cube = supercube(0, 0, 0, width, height, depth);
+
     auto count = 0;
     // The colour we will fill the window with
     unsigned char red = 0;
@@ -827,8 +848,15 @@ int main()
 
     auto lastMousePos = sf::Mouse::getPosition(window);
 
+    auto starttime = std::chrono::system_clock::now();
+    auto opspersec = 0.0f;
+
     while (window.isOpen())
     {
+        auto timesincestart = std::chrono::system_clock::now() - starttime;
+        opspersec = 1.0f/ std::chrono::duration<double>(timesincestart).count();
+        starttime = std::chrono::system_clock::now();
+
         threads[0].run(count);
         // check all the window's events that were triggered since the last iteration of the loop
         sf::Event event;
@@ -853,7 +881,7 @@ int main()
                 // if(delta.x==0 && delta.y==0)continue;
 
                 lastMousePos = {mpos.x, mpos.y};
-                if (mpos.x == 512 && mpos.y == 512)
+                if (mpos.x == 256 && mpos.y == 256)
                     continue;
 
                 camera.rotation.x -= float(delta.y) / 300;
@@ -874,7 +902,7 @@ int main()
             window.clear(sf::Color::Black);
 
             // set screenbuffergpu to black
-            // cudaMemset(screenbufferGPU, 0, 1024 * 1024 * 4 * sizeof(uint8_t));
+            // cudaMemset(screenbufferGPU, 0, 512 * 512 * 4 * sizeof(uint8_t));
         }
 
 
@@ -916,6 +944,7 @@ int main()
                         pos.x = i;
                         pos.y = j;
                         pos.z = k;
+                        pos.w = 0.01;
 
                         cudaMemcpy(part, &pos, sizeof(float4), cudaMemcpyHostToDevice);
                         count += 1;
@@ -932,10 +961,10 @@ int main()
         {
 
             
-            sf::Mouse::setPosition(sf::Vector2i(512, 512), window);
+            sf::Mouse::setPosition(sf::Vector2i(256, 256), window);
            
             camera.update();
-            drawbox(0, 0, 0, width, height, depth, shaderProgram, camera, threads[0]);
+            drawbox(0, 0, 0, width, height, depth, shaderProgram, camera, threads[0], cube);
 
            
 
@@ -944,7 +973,7 @@ int main()
             auto camerpos = camera.position;
             auto zeropos = camera.apply({0, 0, 0, 1});
             // std::cout << "frames per second(0dp): " << int(1.0 / std::chrono::duration<double>(currtime - currenttime).count()) << " : Active Particles: " << std::min(count, particlecount) << " : Brush Size: " << brushsize << "\r";
-            std::cout << "camera position: " << camerpos.x << " " << camerpos.y << " " << camerpos.z << " : zero position: " << zeropos.x << " " << zeropos.y << " " << zeropos.z << " : frames per second(0dp): " << int(1.0 / std::chrono::duration<double>(currtime - currenttime).count()) << " : Active Particles: " << std::min(count, particlecount) << " : Brush Size: " << brushsize << "\r";
+            std::cout << "camera position: " << camerpos.x << " " << camerpos.y << " " << camerpos.z << " : zero position: " << zeropos.x << " " << zeropos.y << " " << zeropos.z << " : frames per second(0dp): " << int(1.0 / std::chrono::duration<double>(currtime - currenttime).count()) << " : Active Particles: " << std::min(count, particlecount) << " : Brush Size: " << brushsize << " : ops per second: " << opspersec << "\r";
             std::cout << std::flush;
             currenttime = currtime;
             frame++;
